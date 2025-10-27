@@ -39,7 +39,7 @@ export default function Dashboard() {
       return;
     }
     loadDashboard();
-  }, [user]);
+  }, [user, navigate]);
 
   const loadDashboard = async () => {
     try {

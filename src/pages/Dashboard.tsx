@@ -276,8 +276,6 @@ export default function Dashboard() {
                       ))
                     )}
                   </TableBody>
-                    ))}
-                  </TableBody>
                 </Table>
                 
                 {exchanges.length === 0 && (

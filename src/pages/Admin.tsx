@@ -11,6 +11,10 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminRates from '@/components/admin/AdminRates';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminAdvancedSettings from '@/components/admin/AdminAdvancedSettings';
+import AdminCurrencies from '@/components/admin/AdminCurrencies';
+import AdminPartners from '@/components/admin/AdminPartners';
+import AdminOrderSearch from '@/components/admin/AdminOrderSearch';
+import AdminAnalytics from '@/components/admin/AdminAnalytics';
 
 interface Transaction {
   id: string;
@@ -105,6 +109,14 @@ const Admin = () => {
               <Icon name="LayoutDashboard" size={18} className="mr-2" />
               Дашборд
             </TabsTrigger>
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-primary">
+              <Icon name="BarChart3" size={18} className="mr-2" />
+              Аналитика
+            </TabsTrigger>
+            <TabsTrigger value="search" className="data-[state=active]:bg-primary">
+              <Icon name="Search" size={18} className="mr-2" />
+              Поиск
+            </TabsTrigger>
             <TabsTrigger value="transactions" className="data-[state=active]:bg-primary">
               <Icon name="ArrowLeftRight" size={18} className="mr-2" />
               Транзакции
@@ -112,6 +124,14 @@ const Admin = () => {
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">
               <Icon name="Users" size={18} className="mr-2" />
               Пользователи
+            </TabsTrigger>
+            <TabsTrigger value="currencies" className="data-[state=active]:bg-primary">
+              <Icon name="Coins" size={18} className="mr-2" />
+              Валюты
+            </TabsTrigger>
+            <TabsTrigger value="partners" className="data-[state=active]:bg-primary">
+              <Icon name="Handshake" size={18} className="mr-2" />
+              Партнёры
             </TabsTrigger>
             <TabsTrigger value="rates" className="data-[state=active]:bg-primary">
               <Icon name="TrendingUp" size={18} className="mr-2" />
@@ -131,12 +151,28 @@ const Admin = () => {
             <AdminDashboard stats={stats} transactions={transactions} users={users} showHints={showHints} />
           </TabsContent>
 
+          <TabsContent value="analytics">
+            <AdminAnalytics />
+          </TabsContent>
+
+          <TabsContent value="search">
+            <AdminOrderSearch />
+          </TabsContent>
+
           <TabsContent value="transactions">
             <AdminTransactions transactions={transactions} onCancelTransaction={handleCancelTransaction} />
           </TabsContent>
 
           <TabsContent value="users">
             <AdminUsers users={users} onBlockUser={handleBlockUser} onApproveKYC={handleApproveKYC} />
+          </TabsContent>
+
+          <TabsContent value="currencies">
+            <AdminCurrencies />
+          </TabsContent>
+
+          <TabsContent value="partners">
+            <AdminPartners />
           </TabsContent>
 
           <TabsContent value="rates">

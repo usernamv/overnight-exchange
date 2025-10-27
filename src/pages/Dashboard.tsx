@@ -14,6 +14,7 @@ const KYC_AML_API_URL = 'https://functions.poehali.dev/4f24f2ad-e009-45ce-9f47-e
 
 interface Exchange {
   id: number;
+  order_number?: string;
   from_currency: string;
   to_currency: string;
   from_amount: number;
@@ -21,6 +22,10 @@ interface Exchange {
   status: string;
   created_at: string;
   exchange_rate: number;
+  deposit_tx_hash?: string;
+  withdrawal_tx_hash?: string;
+  from_wallet?: string;
+  to_wallet?: string;
 }
 
 export default function Dashboard() {
@@ -193,45 +198,84 @@ export default function Dashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
+                      <TableHead>№ Заявки</TableHead>
                       <TableHead>Дата</TableHead>
                       <TableHead>Обмен</TableHead>
                       <TableHead>Сумма</TableHead>
-                      <TableHead>Курс</TableHead>
+                      <TableHead>TX Hash</TableHead>
                       <TableHead>Статус</TableHead>
                       <TableHead>Действия</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {exchanges.map((ex) => (
-                      <TableRow key={ex.id}>
-                        <TableCell className="font-mono">#{ex.id}</TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(ex.created_at).toLocaleString('ru-RU')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{ex.from_currency}</span>
-                            <Icon name="ArrowRight" size={16} />
-                            <span className="font-semibold">{ex.to_currency}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="text-sm">{ex.from_amount} {ex.from_currency}</p>
-                            <p className="text-sm text-green-400">≈ {ex.to_amount} {ex.to_currency}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {ex.exchange_rate?.toFixed(6)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(ex.status)}</TableCell>
-                        <TableCell>
-                          <Button size="sm" variant="ghost">
-                            <Icon name="Eye" size={16} />
-                          </Button>
+                    {exchanges.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          <Icon name="Inbox" size={48} className="mx-auto mb-2 opacity-50" />
+                          <p>У вас пока нет обменов</p>
                         </TableCell>
                       </TableRow>
+                    ) : (
+                      exchanges.map((ex) => (
+                        <TableRow key={ex.id}>
+                          <TableCell className="font-mono font-semibold">
+                            {ex.order_number || `#${ex.id}`}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {new Date(ex.created_at).toLocaleString('ru-RU', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-primary">{ex.from_currency}</span>
+                              <Icon name="ArrowRight" size={16} className="text-muted-foreground" />
+                              <span className="font-semibold text-secondary">{ex.to_currency}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium">{ex.from_amount} {ex.from_currency}</p>
+                              <p className="text-sm text-green-400">→ {ex.to_amount} {ex.to_currency}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {ex.deposit_tx_hash && (
+                                <div className="flex items-center gap-1">
+                                  <Icon name="Download" size={12} className="text-blue-400" />
+                                  <span className="text-xs font-mono text-muted-foreground">
+                                    {ex.deposit_tx_hash.slice(0, 8)}...
+                                  </span>
+                                </div>
+                              )}
+                              {ex.withdrawal_tx_hash && (
+                                <div className="flex items-center gap-1">
+                                  <Icon name="Upload" size={12} className="text-green-400" />
+                                  <span className="text-xs font-mono text-muted-foreground">
+                                    {ex.withdrawal_tx_hash.slice(0, 8)}...
+                                  </span>
+                                </div>
+                              )}
+                              {!ex.deposit_tx_hash && !ex.withdrawal_tx_hash && (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(ex.status)}</TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="ghost">
+                              <Icon name="Eye" size={16} />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
                     ))}
                   </TableBody>
                 </Table>

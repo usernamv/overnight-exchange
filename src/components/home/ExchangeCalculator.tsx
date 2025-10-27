@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import CurrencySelector from '@/components/CurrencySelector';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ExchangeCalculatorProps {
   fromAmount: string;
@@ -27,14 +28,16 @@ const ExchangeCalculator = ({
   onSwap,
   onExchange,
 }: ExchangeCalculatorProps) => {
+  const { t } = useLanguage();
+
   return (
     <section id="exchange" className="container mx-auto px-4 py-16">
       <Card className="max-w-2xl mx-auto p-8 bg-card/50 backdrop-blur-sm border-border/40 animate-scale-in">
-        <h2 className="text-3xl font-bold mb-6 text-center">Калькулятор обмена</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center">{t.exchange.title}</h2>
         
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Отдаете</label>
+            <label className="text-sm text-muted-foreground">{t.exchange.youSend}</label>
             <div className="flex gap-2">
               <Input
                 type="number"
@@ -63,7 +66,7 @@ const ExchangeCalculator = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Получаете</label>
+            <label className="text-sm text-muted-foreground">{t.exchange.youGet}</label>
             <div className="flex gap-2">
               <Input
                 type="text"
@@ -85,11 +88,14 @@ const ExchangeCalculator = ({
             onClick={onExchange}
           >
             <Icon name="Repeat" size={20} className="mr-2" />
-            Обменять
+            {t.exchange.button}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            Курс обновляется каждые 30 секунд. Комиссия платформы включена в курс.
+            {t.language === 'ru' 
+              ? 'Курс обновляется каждые 30 секунд. Комиссия платформы включена в курс.'
+              : 'Rate updates every 30 seconds. Platform fee included in rate.'
+            }
           </p>
         </div>
       </Card>

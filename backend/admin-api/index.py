@@ -1,5 +1,5 @@
 """
-Business: Admin API for managing rate sources, sponsors, settings, and currencies
+Business: Admin API for managing rate sources, sponsors, settings, currencies, commissions, and payment providers
 Args: event with httpMethod, body, queryStringParameters; context with request_id
 Returns: HTTP response with admin data or operation results
 """
@@ -9,6 +9,9 @@ import os
 from typing import Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import requests
+from decimal import Decimal
+from datetime import datetime
 
 def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'])
@@ -46,6 +49,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return list_settings(conn)
             elif resource == 'currencies':
                 return list_all_currencies(conn)
+            elif resource == 'commissions':
+                return get_commission_settings(conn)
+            elif resource == 'site_content':
+                category = params.get('category')
+                return get_site_content(conn, category)
+            elif resource == 'payment_providers':
+                return get_payment_providers(conn)
+            elif resource == 'system_settings':
+                return get_system_settings(conn)
+            elif resource == 'payment_transaction':
+                tx_id = params.get('id')
+                return get_transaction_status(conn, tx_id)
             
         elif method == 'POST':
             body = json.loads(event.get('body', '{}'))
@@ -59,6 +74,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return create_currency(conn, body)
             elif resource == 'setting':
                 return update_setting(conn, body)
+            elif resource == 'commission':
+                return create_commission_setting(conn, body)
+            elif resource == 'site_content':
+                return create_site_content(conn, body)
+            elif resource == 'payment':
+                return create_payment(conn, body)
+            elif resource == 'webhook':
+                provider_name = body.get('provider')
+                return handle_webhook(conn, provider_name, body, event.get('headers', {}))
             
         elif method == 'PUT':
             body = json.loads(event.get('body', '{}'))
@@ -70,6 +94,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return update_sponsor(conn, body)
             elif resource == 'currency':
                 return update_currency(conn, body)
+            elif resource == 'commission':
+                return update_commission_setting(conn, body)
+            elif resource == 'site_content':
+                return update_site_content(conn, body)
+            elif resource == 'system_setting':
+                return update_system_setting(conn, body)
+            elif resource == 'payment_provider':
+                return update_provider_config(conn, body)
             
         elif method == 'DELETE':
             params = event.get('queryStringParameters') or {}
@@ -385,5 +417,352 @@ def update_currency(conn, data: Dict) -> Dict:
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
         'body': json.dumps({'success': True, 'message': 'Currency updated'}),
+        'isBase64Encoded': False
+    }
+
+def get_commission_settings(conn) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT id, from_currency, to_currency, commission_percent, 
+               min_commission, max_commission, is_active
+        FROM commission_settings
+        ORDER BY from_currency, to_currency
+    """)
+    commissions = cursor.fetchall()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'commissions': [dict(c) for c in commissions]}, default=str),
+        'isBase64Encoded': False
+    }
+
+def create_commission_setting(conn, data: Dict) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cursor.execute("""
+        INSERT INTO commission_settings 
+        (from_currency, to_currency, commission_percent, min_commission, max_commission, is_active)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id
+    """, (data['from_currency'], data['to_currency'], data['commission_percent'],
+          data.get('min_commission', 0), data.get('max_commission'), data.get('is_active', True)))
+    
+    result = cursor.fetchone()
+    conn.commit()
+    
+    return {
+        'statusCode': 201,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'id': result['id']}),
+        'isBase64Encoded': False
+    }
+
+def update_commission_setting(conn, data: Dict) -> Dict:
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        UPDATE commission_settings
+        SET commission_percent = COALESCE(%s, commission_percent),
+            min_commission = COALESCE(%s, min_commission),
+            max_commission = COALESCE(%s, max_commission),
+            is_active = COALESCE(%s, is_active),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    """, (data.get('commission_percent'), data.get('min_commission'), 
+          data.get('max_commission'), data.get('is_active'), data['id']))
+    
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'message': 'Commission updated'}),
+        'isBase64Encoded': False
+    }
+
+def get_site_content(conn, category=None) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if category:
+        cursor.execute("""
+            SELECT id, key, value, type, category, description, is_active
+            FROM site_content WHERE category = %s ORDER BY key
+        """, (category,))
+    else:
+        cursor.execute("""
+            SELECT id, key, value, type, category, description, is_active
+            FROM site_content ORDER BY category, key
+        """)
+    
+    content_items = cursor.fetchall()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'content': [dict(c) for c in content_items]}, default=str),
+        'isBase64Encoded': False
+    }
+
+def create_site_content(conn, data: Dict) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cursor.execute("""
+        INSERT INTO site_content (key, value, type, category, description, is_active)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id
+    """, (data['key'], data['value'], data.get('type', 'text'),
+          data.get('category', 'general'), data.get('description', ''), data.get('is_active', True)))
+    
+    result = cursor.fetchone()
+    conn.commit()
+    
+    return {
+        'statusCode': 201,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'id': result['id']}),
+        'isBase64Encoded': False
+    }
+
+def update_site_content(conn, data: Dict) -> Dict:
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        UPDATE site_content
+        SET value = COALESCE(%s, value),
+            is_active = COALESCE(%s, is_active),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    """, (data.get('value'), data.get('is_active'), data['id']))
+    
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'message': 'Content updated'}),
+        'isBase64Encoded': False
+    }
+
+def get_system_settings(conn) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT id, key, value, value_type, category, description, is_editable
+        FROM system_settings ORDER BY category, key
+    """)
+    
+    settings = []
+    for row in cursor.fetchall():
+        setting = dict(row)
+        value = setting['value']
+        if setting['value_type'] == 'number':
+            value = float(value) if '.' in value else int(value)
+        elif setting['value_type'] == 'boolean':
+            value = value.lower() == 'true'
+        elif setting['value_type'] == 'json':
+            value = json.loads(value)
+        setting['value'] = value
+        settings.append(setting)
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'settings': settings}, default=str),
+        'isBase64Encoded': False
+    }
+
+def update_system_setting(conn, data: Dict) -> Dict:
+    cursor = conn.cursor()
+    
+    value = data['value']
+    if isinstance(value, bool):
+        value_str = 'true' if value else 'false'
+    elif isinstance(value, (dict, list)):
+        value_str = json.dumps(value)
+    else:
+        value_str = str(value)
+    
+    cursor.execute("""
+        UPDATE system_settings
+        SET value = %s, updated_at = CURRENT_TIMESTAMP
+        WHERE key = %s AND is_editable = true
+    """, (value_str, data['key']))
+    
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'message': 'Setting updated'}),
+        'isBase64Encoded': False
+    }
+
+def get_payment_providers(conn) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT id, name, type, is_active, supported_currencies, config
+        FROM payment_providers ORDER BY name
+    """)
+    providers = cursor.fetchall()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'providers': [dict(p) for p in providers]}, default=str),
+        'isBase64Encoded': False
+    }
+
+def update_provider_config(conn, data: Dict) -> Dict:
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        UPDATE payment_providers
+        SET is_active = COALESCE(%s, is_active),
+            config = COALESCE(%s::jsonb, config),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    """, (data.get('is_active'), json.dumps(data.get('config')) if data.get('config') else None, data['provider_id']))
+    
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'message': 'Provider updated'}),
+        'isBase64Encoded': False
+    }
+
+def create_payment(conn, data: Dict) -> Dict:
+    exchange_id = data.get('exchange_id')
+    provider_id = data.get('provider_id')
+    amount = Decimal(str(data.get('amount')))
+    currency = data.get('currency')
+    
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cursor.execute("""
+        SELECT name, type, api_key_placeholder, config
+        FROM payment_providers WHERE id = %s AND is_active = true
+    """, (provider_id,))
+    
+    provider = cursor.fetchone()
+    if not provider:
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Provider not found or inactive'}),
+            'isBase64Encoded': False
+        }
+    
+    provider_type = provider['type']
+    api_key_secret = os.environ.get(f'{provider_type.upper()}_API_KEY', '')
+    
+    payment_url = f'https://payment.mock/{currency}'
+    external_tx_id = f'mock_{provider_type}_{datetime.now().timestamp()}'
+    payment_address = f'mock_address_{currency}'
+    
+    cursor.execute("""
+        INSERT INTO payment_provider_transactions 
+        (provider_id, exchange_id, external_transaction_id, payment_url, 
+         amount, currency, payment_address, required_confirmations, metadata)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
+    """, (provider_id, exchange_id, external_tx_id, payment_url, 
+          amount, currency, payment_address, 3, json.dumps({'provider_name': provider['name']})))
+    
+    tx_id = cursor.fetchone()['id']
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({
+            'transaction_id': tx_id,
+            'payment_url': payment_url,
+            'payment_address': payment_address,
+            'amount': str(amount),
+            'currency': currency,
+            'provider': provider['name']
+        }),
+        'isBase64Encoded': False
+    }
+
+def handle_webhook(conn, provider_name: str, data: Dict, headers: Dict) -> Dict:
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    external_tx_id = data.get('id') or data.get('payment_id') or data.get('txn_id')
+    status = data.get('status', 'pending')
+    
+    status_map = {
+        'confirmed': 'completed',
+        'completed': 'completed',
+        'finished': 'completed',
+        'pending': 'processing',
+        'waiting': 'processing',
+        'expired': 'expired',
+        'failed': 'failed'
+    }
+    
+    mapped_status = status_map.get(status.lower(), 'processing')
+    
+    cursor.execute("""
+        UPDATE payment_provider_transactions
+        SET status = %s, webhook_data = %s::jsonb, confirmations = %s,
+            updated_at = CURRENT_TIMESTAMP,
+            completed_at = CASE WHEN %s = 'completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
+        WHERE external_transaction_id = %s
+        RETURNING id, exchange_id
+    """, (mapped_status, json.dumps(data), data.get('confirmations', 0), mapped_status, external_tx_id))
+    
+    result = cursor.fetchone()
+    
+    if result and mapped_status == 'completed':
+        cursor.execute("""
+            UPDATE exchanges SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (result['exchange_id'],))
+    
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'status': 'webhook_received'}),
+        'isBase64Encoded': False
+    }
+
+def get_transaction_status(conn, tx_id: str) -> Dict:
+    if not tx_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Transaction ID required'}),
+            'isBase64Encoded': False
+        }
+    
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT ppt.id, ppt.external_transaction_id, ppt.status, ppt.amount, 
+               ppt.currency, ppt.confirmations, ppt.required_confirmations,
+               ppt.payment_url, ppt.payment_address, pp.name as provider_name
+        FROM payment_provider_transactions ppt
+        JOIN payment_providers pp ON ppt.provider_id = pp.id
+        WHERE ppt.id = %s
+    """, (tx_id,))
+    
+    row = cursor.fetchone()
+    
+    if not row:
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Transaction not found'}),
+            'isBase64Encoded': False
+        }
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps(dict(row), default=str),
         'isBase64Encoded': False
     }

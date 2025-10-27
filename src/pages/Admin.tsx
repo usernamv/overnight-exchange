@@ -10,6 +10,7 @@ import AdminTransactions from '@/components/admin/AdminTransactions';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminRates from '@/components/admin/AdminRates';
 import AdminSettings from '@/components/admin/AdminSettings';
+import AdminAdvancedSettings from '@/components/admin/AdminAdvancedSettings';
 
 interface Transaction {
   id: string;
@@ -119,6 +120,10 @@ const Admin = () => {
               <Icon name="Settings" size={18} className="mr-2" />
               Настройки
             </TabsTrigger>
+            <TabsTrigger value="advanced" className="data-[state=active]:bg-primary">
+              <Icon name="Wrench" size={18} className="mr-2" />
+              Управление
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -139,6 +144,10 @@ const Admin = () => {
 
           <TabsContent value="settings">
             <AdminSettings />
+          </TabsContent>
+
+          <TabsContent value="advanced">
+            <AdminAdvancedSettings />
           </TabsContent>
         </Tabs>
       </div>

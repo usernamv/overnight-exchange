@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 
@@ -61,4 +62,4 @@ const FeaturesSection = () => {
   );
 };
 
-export default FeaturesSection;
+export default React.memo(FeaturesSection);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const FAQSection = () => {
@@ -57,4 +58,4 @@ const FAQSection = () => {
   );
 };
 
-export default FAQSection;
+export default React.memo(FAQSection);

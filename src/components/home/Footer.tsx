@@ -1,3 +1,4 @@
+import React from 'react';
 import Icon from '@/components/ui/icon';
 
 const Footer = () => {
@@ -87,4 +88,4 @@ const Footer = () => {
   );
 };
 
-export default Footer;
+export default React.memo(Footer);

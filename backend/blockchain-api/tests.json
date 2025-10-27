@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get blockchain info",
+      "method": "GET",
+      "path": "/?action=get_blockchain_info&blockchain=ethereum",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "blockchain_info": "object"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

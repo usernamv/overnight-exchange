@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Check referral code validity",
+      "method": "GET",
+      "path": "/?action=check_referral_code&code=TEST1234",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "valid": "boolean"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

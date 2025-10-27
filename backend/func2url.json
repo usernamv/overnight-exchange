@@ -1,4 +1,6 @@
 {
+  "blockchain-api": "https://functions.poehali.dev/4c33a2e9-314a-4552-bd06-d6f44745ce46",
+  "trading-features-api": "https://functions.poehali.dev/73d0775c-6762-48c2-a576-215242d34dff",
   "kyc-aml-api": "https://functions.poehali.dev/4f24f2ad-e009-45ce-9f47-ee953647179a",
   "exchange-api": "https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580",
   "admin-api": "https://functions.poehali.dev/d081ce90-f0f7-4af5-b43e-73f17edf6d7c"

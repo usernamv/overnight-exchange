@@ -157,8 +157,10 @@ const Index = () => {
           <div className="hidden md:flex items-center gap-6">
             <a href="#exchange" className="hover:text-primary transition-colors">Обмен</a>
             <a href="#rates" className="hover:text-primary transition-colors">Курсы</a>
-            <a href="#faq" className="hover:text-primary transition-colors">FAQ</a>
-            <a href="#contact" className="hover:text-primary transition-colors">Контакты</a>
+            <Button variant="ghost" onClick={() => navigate('/help')}>
+              <Icon name="HelpCircle" size={18} className="mr-1" />
+              Помощь
+            </Button>
             {!isAuthenticated ? (
               <Button
                 variant="outline"

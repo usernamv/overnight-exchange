@@ -1,6 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -10,6 +17,7 @@ interface HeaderProps {
 
 const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) => {
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
@@ -23,12 +31,30 @@ const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) =>
           </span>
         </div>
         <div className="hidden md:flex items-center gap-6">
-          <a href="#exchange" className="hover:text-primary transition-colors">Обмен</a>
-          <a href="#rates" className="hover:text-primary transition-colors">Курсы</a>
+          <a href="#exchange" className="hover:text-primary transition-colors">{t.nav.rates}</a>
+          <a href="#rates" className="hover:text-primary transition-colors">{t.nav.rates}</a>
           <Button variant="ghost" onClick={() => navigate('/help')}>
             <Icon name="HelpCircle" size={18} className="mr-1" />
-            Помощь
+            {t.nav.support}
           </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Icon name="Globe" size={18} className="mr-1" />
+                {language === 'ru' ? 'RU' : 'EN'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setLanguage('ru')}>
+                🇷🇺 Русский
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('en')}>
+                🇬🇧 English
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {!isAuthenticated ? (
             <>
               <Button
@@ -36,17 +62,19 @@ const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) =>
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 onClick={() => navigate('/login')}
               >
-                Войти
+                {t.nav.login}
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-secondary"
-                onClick={onAdminLoginClick}
-              >
-                <Icon name="ShieldCheck" size={16} className="mr-1" />
-                Админ
-              </Button>
+              {!isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-secondary"
+                  onClick={onAdminLoginClick}
+                >
+                  <Icon name="ShieldCheck" size={16} className="mr-1" />
+                  {t.nav.admin}
+                </Button>
+              )}
             </>
           ) : (
             <>
@@ -55,7 +83,7 @@ const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) =>
                 onClick={() => navigate('/dashboard')}
               >
                 <Icon name="User" size={18} className="mr-2" />
-                Кабинет
+                {t.nav.dashboard}
               </Button>
               {isAdmin && (
                 <Button
@@ -64,7 +92,7 @@ const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) =>
                   onClick={() => navigate('/admin')}
                 >
                   <Icon name="Shield" size={18} className="mr-2" />
-                  Админ
+                  {t.nav.admin}
                 </Button>
               )}
             </>

@@ -38,6 +38,7 @@ const Admin = () => {
   const { toast } = useToast();
   const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showHints, setShowHints] = useState(true);
 
   const handleLogout = () => {
     logout();
@@ -95,7 +96,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <AdminHeader onLogout={handleLogout} />
+      <AdminHeader onLogout={handleLogout} showHints={showHints} setShowHints={setShowHints} />
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -127,7 +128,7 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <AdminDashboard stats={stats} transactions={transactions} users={users} />
+            <AdminDashboard stats={stats} transactions={transactions} users={users} showHints={showHints} />
           </TabsContent>
 
           <TabsContent value="transactions">

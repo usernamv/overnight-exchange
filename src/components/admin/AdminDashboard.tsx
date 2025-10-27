@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 
 const ADMIN_API_URL = 'https://functions.poehali.dev/d081ce90-f0f7-4af5-b43e-73f17edf6d7c';
@@ -36,9 +37,10 @@ interface AdminDashboardProps {
   }>;
   transactions: Transaction[];
   users: User[];
+  showHints?: boolean;
 }
 
-const AdminDashboard = ({ stats, transactions, users }: AdminDashboardProps) => {
+const AdminDashboard = ({ stats, transactions, users, showHints = false }: AdminDashboardProps) => {
   const [apiStats, setApiStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,6 +77,16 @@ const AdminDashboard = ({ stats, transactions, users }: AdminDashboardProps) => 
 
   return (
     <div className="space-y-6">
+      {showHints && (
+        <Alert className="bg-primary/10 border-primary/50">
+          <Icon name="Lightbulb" size={18} className="text-primary" />
+          <AlertDescription className="text-sm ml-2">
+            <strong>Подсказка:</strong> На этой странице отображается общая статистика платформы. 
+            Используйте вкладки выше для управления транзакциями, пользователями и настройками.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {displayStats.map((stat, index) => (
           <Card key={index} className="p-6 bg-card/50 backdrop-blur-sm border-border/40 hover:border-primary/50 transition-all">

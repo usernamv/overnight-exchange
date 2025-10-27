@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import CurrencySelector from '@/components/CurrencySelector';
 import ExchangeFlow from '@/components/ExchangeFlow';
 import { currencies, getCurrenciesByType } from '@/data/currencies';
+import { notifyNewExchange } from '@/utils/telegramNotifications';
 
 const EXCHANGE_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
 
@@ -23,13 +25,16 @@ interface CryptoRate {
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, login } = useAuth();
   const [fromAmount, setFromAmount] = useState('1');
   const [fromCrypto, setFromCrypto] = useState('BTC');
   const [toCrypto, setToCrypto] = useState('USDT');
   const [toAmount, setToAmount] = useState('0');
   const [rates, setRates] = useState<CryptoRate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
 
   const displayCryptos = getCurrenciesByType('crypto').filter(c => 
     ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI'].includes(c.symbol)
@@ -92,6 +97,27 @@ const Index = () => {
     setToCrypto(tempCrypto);
   };
 
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await login(adminEmail, adminPassword);
+    if (success) {
+      setShowAdminLogin(false);
+      setAdminEmail('');
+      setAdminPassword('');
+      toast({
+        title: 'Вход выполнен',
+        description: 'Добро пожаловать в админ-панель!',
+      });
+      navigate('/admin');
+    } else {
+      toast({
+        title: 'Ошибка входа',
+        description: 'Неверный email или пароль',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleExchange = async () => {
     try {
       const fromRate = rates.find(r => r.symbol === fromCrypto);
@@ -129,6 +155,15 @@ const Index = () => {
           title: 'Обмен создан',
           description: `${fromAmount} ${fromCrypto} → ${toAmount} ${toCrypto}. ID: ${result.exchange_id}`,
         });
+        
+        notifyNewExchange({
+          from_currency: fromCrypto,
+          to_currency: toCrypto,
+          from_amount: fromAmount,
+          to_amount: toAmount,
+          exchange_id: result.exchange_id,
+          user_email: isAuthenticated ? 'authenticated-user' : 'guest',
+        });
       } else {
         throw new Error('Failed to create exchange');
       }
@@ -162,13 +197,24 @@ const Index = () => {
               Помощь
             </Button>
             {!isAuthenticated ? (
-              <Button
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                onClick={() => navigate('/login')}
-              >
-                Войти
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => navigate('/login')}
+                >
+                  Войти
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-secondary"
+                  onClick={() => setShowAdminLogin(true)}
+                >
+                  <Icon name="ShieldCheck" size={16} className="mr-1" />
+                  Админ
+                </Button>
+              </>
             ) : (
               <>
                 <Button
@@ -207,11 +253,22 @@ const Index = () => {
             Быстрый и безопасный обмен криптовалют по лучшим курсам. Работаем 24/7 без выходных.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 glow-cyan">
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 glow-cyan"
+              onClick={() => {
+                document.getElementById('exchange')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <Icon name="Zap" size={20} className="mr-2" />
               Начать обмен
             </Button>
-            <Button size="lg" variant="outline" className="border-primary/50">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-primary/50"
+              onClick={() => navigate('/help')}
+            >
               <Icon name="Shield" size={20} className="mr-2" />
               AML/KYC
             </Button>
@@ -469,6 +526,71 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Admin Login Modal */}
+      <Dialog open={showAdminLogin} onOpenChange={setShowAdminLogin}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="ShieldCheck" size={24} className="text-secondary" />
+              Вход в админ-панель
+            </DialogTitle>
+            <DialogDescription>
+              Введите учетные данные администратора для доступа к панели управления
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="admin-email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="admin-email"
+                type="email"
+                placeholder="admin@overnight.exchange"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                required
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="admin-password" className="text-sm font-medium">
+                Пароль
+              </label>
+              <Input
+                id="admin-password"
+                type="password"
+                placeholder="••••••••"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                required
+                className="bg-background"
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAdminLogin(false)}
+                className="flex-1"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-secondary hover:bg-secondary/90"
+              >
+                <Icon name="LogIn" size={18} className="mr-2" />
+                Войти
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground text-center pt-2">
+              Доступ только для администраторов платформы
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

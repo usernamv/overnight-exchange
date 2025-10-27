@@ -149,24 +149,74 @@ def get_exchange(conn, exchange_id: str) -> Dict:
 def create_exchange(conn, data: Dict) -> Dict:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
+    client_id = data.get('client_id')
+    from_amount = float(data['from_amount'])
+    from_currency = data['from_currency']
+    to_currency = data['to_currency']
+    
+    if not client_id:
+        cursor.execute("""
+            INSERT INTO clients (email, full_name) 
+            VALUES (%s, %s) 
+            RETURNING id
+        """, (data.get('email', 'anonymous@exchange.com'), data.get('name', 'Anonymous')))
+        result = cursor.fetchone()
+        client_id = result['id']
+    
+    cursor.execute("SELECT * FROM clients WHERE id = %s", (client_id,))
+    client = cursor.fetchone()
+    verification_level = client['verification_level'] or 'none'
+    
+    cursor.execute("""
+        SELECT * FROM exchange_limits WHERE verification_level = %s
+    """, (verification_level,))
+    limits = cursor.fetchone()
+    
+    from_rate_usd = data.get('from_rate_usd', from_amount)
+    amount_usd = from_amount * from_rate_usd
+    
+    if amount_usd > float(limits['single_transaction_limit_usd']):
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'success': False,
+                'error': 'Amount exceeds limit',
+                'limit': float(limits['single_transaction_limit_usd']),
+                'verification_level': verification_level
+            }),
+            'isBase64Encoded': False
+        }
+    
     cursor.execute("""
         INSERT INTO exchanges 
         (client_id, from_currency, to_currency, from_amount, to_amount, exchange_rate, from_wallet, to_wallet, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
         RETURNING id, created_at
     """, (
-        data.get('client_id'),
-        data['from_currency'],
-        data['to_currency'],
+        client_id,
+        from_currency,
+        to_currency,
         data['from_amount'],
         data['to_amount'],
         data['exchange_rate'],
         data.get('from_wallet'),
-        data.get('to_wallet'),
-        data.get('status', 'pending')
+        data.get('to_wallet')
     ))
     
     result = cursor.fetchone()
+    exchange_id = result['id']
+    
+    cursor.execute("""
+        INSERT INTO transaction_logs (exchange_id, action, status_to, performed_by, notes)
+        VALUES (%s, 'created', 'pending', 'system', 'Exchange created')
+    """, (exchange_id,))
+    
+    cursor.execute("""
+        INSERT INTO notifications (client_id, type, title, message)
+        VALUES (%s, 'exchange_created', 'Exchange Created', %s)
+    """, (client_id, f'Exchange {exchange_id}: {from_amount} {from_currency} -> {data["to_amount"]} {to_currency}'))
+    
     conn.commit()
     
     return {
@@ -174,7 +224,9 @@ def create_exchange(conn, data: Dict) -> Dict:
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
         'body': json.dumps({
             'success': True,
-            'exchange_id': result['id'],
+            'exchange_id': exchange_id,
+            'client_id': client_id,
+            'status': 'pending',
             'created_at': str(result['created_at'])
         }, default=str),
         'isBase64Encoded': False

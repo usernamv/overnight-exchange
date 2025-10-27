@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Check exchange limits",
+      "method": "GET",
+      "path": "/?action=check_limits&client_id=1&amount_usd=100",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "can_proceed": "boolean",
+        "verification_level": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

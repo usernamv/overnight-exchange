@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import CurrencySelector from '@/components/CurrencySelector';
+import ExchangeFlow from '@/components/ExchangeFlow';
 import { currencies, getCurrenciesByType } from '@/data/currencies';
 
 const EXCHANGE_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
@@ -168,6 +169,13 @@ const Index = () => {
               </Button>
             ) : (
               <>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  <Icon name="User" size={18} className="mr-2" />
+                  Кабинет
+                </Button>
                 {isAdmin && (
                   <Button
                     variant="outline"
@@ -257,14 +265,17 @@ const Index = () => {
               </div>
             </div>
 
-            <Button
-              onClick={handleExchange}
-              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 glow-cyan"
-              size="lg"
-            >
-              <Icon name="Repeat" size={20} className="mr-2" />
-              Обменять
-            </Button>
+            <ExchangeFlow
+              fromCurrency={fromCrypto}
+              toCurrency={toCrypto}
+              fromAmount={fromAmount}
+              toAmount={toAmount}
+              exchangeRate={rates.find(r => r.symbol === fromCrypto)?.price || 0}
+              onComplete={() => {
+                setFromAmount('1');
+                setToAmount('0');
+              }}
+            />
           </div>
         </Card>
       </section>

@@ -12,10 +12,9 @@ import {
 interface HeaderProps {
   isAuthenticated: boolean;
   isAdmin: boolean;
-  onAdminLoginClick: () => void;
 }
 
-const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) => {
+const Header = ({ isAuthenticated, isAdmin }: HeaderProps) => {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
 
@@ -56,26 +55,13 @@ const Header = ({ isAuthenticated, isAdmin, onAdminLoginClick }: HeaderProps) =>
           </DropdownMenu>
 
           {!isAuthenticated ? (
-            <>
-              <Button
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                onClick={() => navigate('/login')}
-              >
-                {t.nav.login}
-              </Button>
-              {!isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-secondary"
-                  onClick={onAdminLoginClick}
-                >
-                  <Icon name="ShieldCheck" size={16} className="mr-1" />
-                  {t.nav.admin}
-                </Button>
-              )}
-            </>
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              onClick={() => navigate('/login')}
+            >
+              {t.nav.login}
+            </Button>
           ) : (
             <>
               <Button

@@ -2,7 +2,6 @@ import { getCurrenciesByType } from '@/data/currencies';
 import { useAuth } from '@/contexts/AuthContext';
 import { useExchangeCalculator } from '@/hooks/useExchangeCalculator';
 import { useExchangeSubmit } from '@/hooks/useExchangeSubmit';
-import { useAdminLogin } from '@/hooks/useAdminLogin';
 import Header from '@/components/home/Header';
 import HeroSection from '@/components/home/HeroSection';
 import ExchangeCalculator from '@/components/home/ExchangeCalculator';
@@ -10,7 +9,6 @@ import CryptoRatesSection from '@/components/home/CryptoRatesSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
 import FAQSection from '@/components/home/FAQSection';
 import Footer from '@/components/home/Footer';
-import AdminLoginModal from '@/components/home/AdminLoginModal';
 
 const Index = () => {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -29,16 +27,6 @@ const Index = () => {
   } = useExchangeCalculator();
 
   const { handleExchange: submitExchange } = useExchangeSubmit();
-
-  const {
-    showAdminLogin,
-    adminEmail,
-    adminPassword,
-    setShowAdminLogin,
-    setAdminEmail,
-    setAdminPassword,
-    handleAdminLogin,
-  } = useAdminLogin();
 
   const displayCryptos = getCurrenciesByType('crypto').filter(c => 
     ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI'].includes(c.symbol)
@@ -60,7 +48,6 @@ const Index = () => {
       <Header 
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}
-        onAdminLoginClick={() => setShowAdminLogin(true)}
       />
 
       <HeroSection />
@@ -88,16 +75,6 @@ const Index = () => {
       <FAQSection />
 
       <Footer />
-
-      <AdminLoginModal
-        open={showAdminLogin}
-        onOpenChange={setShowAdminLogin}
-        email={adminEmail}
-        password={adminPassword}
-        onEmailChange={setAdminEmail}
-        onPasswordChange={setAdminPassword}
-        onSubmit={handleAdminLogin}
-      />
     </div>
   );
 };

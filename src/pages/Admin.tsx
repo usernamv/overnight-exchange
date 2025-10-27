@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Transaction {
   id: string;
@@ -31,8 +33,19 @@ interface User {
 }
 
 const Admin = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Выход выполнен",
+      description: "До скорой встречи!",
+    });
+    navigate('/');
+  };
 
   const stats = [
     { label: 'Всего транзакций', value: '12,458', change: '+12.5%', icon: 'Repeat', positive: true },
@@ -102,7 +115,7 @@ const Admin = () => {
               <Icon name="Bell" size={18} className="mr-2" />
               Уведомления
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleLogout}>
               <Icon name="LogOut" size={18} className="mr-2" />
               Выйти
             </Button>

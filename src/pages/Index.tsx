@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CryptoRate {
   symbol: string;
@@ -15,7 +17,9 @@ interface CryptoRate {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [fromAmount, setFromAmount] = useState('1');
   const [fromCrypto, setFromCrypto] = useState('BTC');
   const [toCrypto, setToCrypto] = useState('USDT');
@@ -110,9 +114,28 @@ const Index = () => {
             <a href="#rates" className="hover:text-primary transition-colors">Курсы</a>
             <a href="#faq" className="hover:text-primary transition-colors">FAQ</a>
             <a href="#contact" className="hover:text-primary transition-colors">Контакты</a>
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              Войти
-            </Button>
+            {!isAuthenticated ? (
+              <Button
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                onClick={() => navigate('/login')}
+              >
+                Войти
+              </Button>
+            ) : (
+              <>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+                    onClick={() => navigate('/admin')}
+                  >
+                    <Icon name="Shield" size={18} className="mr-2" />
+                    Админ
+                  </Button>
+                )}
+              </>
+            )}
           </div>
         </nav>
       </header>

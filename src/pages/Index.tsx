@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import CurrencySelector from '@/components/CurrencySelector';
 import { currencies, getCurrenciesByType } from '@/data/currencies';
 
+const EXCHANGE_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
+
 interface CryptoRate {
   symbol: string;
   name: string;
@@ -89,11 +91,53 @@ const Index = () => {
     setToCrypto(tempCrypto);
   };
 
-  const handleExchange = () => {
-    toast({
-      title: "Обмен инициирован",
-      description: `${fromAmount} ${fromCrypto} → ${toAmount} ${toCrypto}`,
-    });
+  const handleExchange = async () => {
+    try {
+      const fromRate = rates.find(r => r.symbol === fromCrypto);
+      const toRate = rates.find(r => r.symbol === toCrypto);
+      
+      if (!fromRate || !toRate) {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось получить курс',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const exchangeRate = fromRate.price / toRate.price;
+
+      const response = await fetch(EXCHANGE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_exchange',
+          from_currency: fromCrypto,
+          to_currency: toCrypto,
+          from_amount: parseFloat(fromAmount),
+          to_amount: parseFloat(toAmount),
+          exchange_rate: exchangeRate,
+          status: 'pending',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: 'Обмен создан',
+          description: `${fromAmount} ${fromCrypto} → ${toAmount} ${toCrypto}. ID: ${result.exchange_id}`,
+        });
+      } else {
+        throw new Error('Failed to create exchange');
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать обмен',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

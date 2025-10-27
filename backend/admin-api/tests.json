@@ -1,0 +1,35 @@
+{
+  "tests": [
+    {
+      "name": "Get dashboard stats",
+      "method": "GET",
+      "path": "/?resource=dashboard",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "exchange_stats": "object",
+        "total_clients": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "List rate sources",
+      "method": "GET",
+      "path": "/?resource=rate_sources",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "rate_sources": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "List sponsors",
+      "method": "GET",
+      "path": "/?resource=sponsors",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "sponsors": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "List exchanges",
+      "method": "GET",
+      "path": "/?action=list_exchanges",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "exchanges": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "List currencies",
+      "method": "GET",
+      "path": "/?action=list_currencies",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "currencies": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

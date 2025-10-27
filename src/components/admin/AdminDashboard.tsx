@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+
+const ADMIN_API_URL = 'https://functions.poehali.dev/d081ce90-f0f7-4af5-b43e-73f17edf6d7c';
 
 interface Transaction {
   id: string;
@@ -36,10 +39,44 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard = ({ stats, transactions, users }: AdminDashboardProps) => {
+  const [apiStats, setApiStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const res = await fetch(`${ADMIN_API_URL}?resource=dashboard`);
+      const data = await res.json();
+      setApiStats(data);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayStats = apiStats ? [
+    { label: 'Всего обменов', value: apiStats.exchange_stats.total_exchanges.toString(), change: '+0%', icon: 'Repeat', positive: true },
+    { label: 'Завершено', value: apiStats.exchange_stats.completed_exchanges.toString(), change: '+0%', icon: 'CheckCircle', positive: true },
+    { label: 'В ожидании', value: apiStats.exchange_stats.pending_exchanges.toString(), change: '+0%', icon: 'Clock', positive: true },
+    { label: 'Клиентов', value: apiStats.total_clients.toString(), change: '+0%', icon: 'Users', positive: true },
+  ] : stats;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {displayStats.map((stat, index) => (
           <Card key={index} className="p-6 bg-card/50 backdrop-blur-sm border-border/40 hover:border-primary/50 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.positive ? 'bg-primary/10 glow-cyan' : 'bg-secondary/10 glow-purple'}`}>

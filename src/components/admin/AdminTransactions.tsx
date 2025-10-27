@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
+import { useToast } from '@/hooks/use-toast';
+
+const EXCHANGE_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
 
 interface Transaction {
   id: string;
@@ -23,12 +27,47 @@ interface AdminTransactionsProps {
 }
 
 const AdminTransactions = ({ transactions, onCancelTransaction }: AdminTransactionsProps) => {
+  const { toast } = useToast();
+  const [apiTransactions, setApiTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  useEffect(() => {
+    loadTransactions();
+  }, [statusFilter]);
+
+  const loadTransactions = async () => {
+    try {
+      const url = statusFilter === 'all' 
+        ? `${EXCHANGE_API_URL}?action=list_exchanges&limit=100`
+        : `${EXCHANGE_API_URL}?action=list_exchanges&limit=100&status=${statusFilter}`;
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      setApiTransactions(data.exchanges);
+    } catch (error) {
+      toast({ title: 'Ошибка', description: 'Не удалось загрузить обмены', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayTransactions = apiTransactions.length > 0 ? apiTransactions : transactions;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-2xl font-bold">Все транзакции</h3>
         <div className="flex gap-2">
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Статус" />
             </SelectTrigger>
@@ -55,13 +94,13 @@ const AdminTransactions = ({ transactions, onCancelTransaction }: AdminTransacti
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((tx) => (
+          {displayTransactions.map((tx) => (
             <TableRow key={tx.id}>
-              <TableCell className="font-mono">{tx.id}</TableCell>
-              <TableCell>{tx.date}</TableCell>
-              <TableCell>{tx.user}</TableCell>
-              <TableCell>{tx.from} → {tx.to}</TableCell>
-              <TableCell>{tx.fromAmount} → {tx.toAmount}</TableCell>
+              <TableCell className="font-mono">#{tx.id}</TableCell>
+              <TableCell>{tx.created_at ? new Date(tx.created_at).toLocaleString('ru-RU') : tx.date}</TableCell>
+              <TableCell>{tx.email || tx.user || 'Аноним'}</TableCell>
+              <TableCell>{tx.from_currency || tx.from} → {tx.to_currency || tx.to}</TableCell>
+              <TableCell>{tx.from_amount || tx.fromAmount} → {tx.to_amount || tx.toAmount}</TableCell>
               <TableCell>
                 <Badge variant={tx.status === 'completed' ? 'default' : tx.status === 'pending' ? 'secondary' : 'destructive'}>
                   {tx.status === 'completed' ? 'Выполнено' : tx.status === 'pending' ? 'В обработке' : 'Ошибка'}

@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import CurrencySelector from '@/components/CurrencySelector';
+import { currencies, getCurrenciesByType } from '@/data/currencies';
 
 interface CryptoRate {
   symbol: string;
@@ -27,14 +28,9 @@ const Index = () => {
   const [rates, setRates] = useState<CryptoRate[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const cryptoList = [
-    { symbol: 'BTC', name: 'Bitcoin', icon: '₿' },
-    { symbol: 'ETH', name: 'Ethereum', icon: 'Ξ' },
-    { symbol: 'USDT', name: 'Tether', icon: '₮' },
-    { symbol: 'BNB', name: 'Binance Coin', icon: '🔶' },
-    { symbol: 'SOL', name: 'Solana', icon: '◎' },
-    { symbol: 'XRP', name: 'Ripple', icon: '✕' },
-  ];
+  const displayCryptos = getCurrenciesByType('crypto').filter(c => 
+    ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI'].includes(c.symbol)
+  );
 
   useEffect(() => {
     fetchRates();
@@ -46,18 +42,22 @@ const Index = () => {
 
   const fetchRates = async () => {
     try {
-      const symbols = cryptoList.map(c => c.symbol).join(',');
+      const cryptoSymbols = currencies.filter(c => c.type === 'crypto').map(c => c.symbol).join(',');
+      const fiatSymbols = currencies.filter(c => c.type === 'fiat').map(c => c.symbol).join(',');
+      
       const response = await fetch(
-        `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${symbols}&tsyms=USD`
+        `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${cryptoSymbols}&tsyms=${fiatSymbols}`
       );
       const data = await response.json();
       
-      const ratesData: CryptoRate[] = cryptoList.map(crypto => ({
-        symbol: crypto.symbol,
-        name: crypto.name,
-        price: data.RAW?.[crypto.symbol]?.USD?.PRICE || 0,
-        change24h: data.RAW?.[crypto.symbol]?.USD?.CHANGEPCT24HOUR || 0,
-      }));
+      const ratesData: CryptoRate[] = currencies
+        .filter(c => c.type === 'crypto')
+        .map(crypto => ({
+          symbol: crypto.symbol,
+          name: crypto.name,
+          price: data.RAW?.[crypto.symbol]?.USD?.PRICE || 0,
+          change24h: data.RAW?.[crypto.symbol]?.USD?.CHANGEPCT24HOUR || 0,
+        }));
       
       setRates(ratesData);
       setLoading(false);
@@ -182,18 +182,7 @@ const Index = () => {
                   className="flex-1 bg-background/50 border-border/40"
                   placeholder="0.00"
                 />
-                <Select value={fromCrypto} onValueChange={setFromCrypto}>
-                  <SelectTrigger className="w-[140px] bg-background/50 border-border/40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cryptoList.map(crypto => (
-                      <SelectItem key={crypto.symbol} value={crypto.symbol}>
-                        {crypto.icon} {crypto.symbol}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CurrencySelector value={fromCrypto} onChange={setFromCrypto} />
               </div>
             </div>
 
@@ -220,18 +209,7 @@ const Index = () => {
                   className="flex-1 bg-background/50 border-border/40"
                   placeholder="0.00"
                 />
-                <Select value={toCrypto} onValueChange={setToCrypto}>
-                  <SelectTrigger className="w-[140px] bg-background/50 border-border/40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cryptoList.map(crypto => (
-                      <SelectItem key={crypto.symbol} value={crypto.symbol}>
-                        {crypto.icon} {crypto.symbol}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CurrencySelector value={toCrypto} onChange={setToCrypto} />
               </div>
             </div>
 
@@ -258,29 +236,32 @@ const Index = () => {
               </Card>
             ))
           ) : (
-            rates.map((rate) => (
-              <Card
-                key={rate.symbol}
-                className="p-6 bg-card/50 backdrop-blur-sm border-border/40 hover:border-primary/50 transition-all hover:scale-105"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold">{rate.symbol}</h3>
-                    <p className="text-sm text-muted-foreground">{rate.name}</p>
+            rates.filter(r => displayCryptos.some(c => c.symbol === r.symbol)).map((rate) => {
+              const currency = displayCryptos.find(c => c.symbol === rate.symbol);
+              return (
+                <Card
+                  key={rate.symbol}
+                  className="p-6 bg-card/50 backdrop-blur-sm border-border/40 hover:border-primary/50 transition-all hover:scale-105"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold">{rate.symbol}</h3>
+                      <p className="text-sm text-muted-foreground">{rate.name}</p>
+                    </div>
+                    <div className="text-3xl">
+                      {currency?.icon}
+                    </div>
                   </div>
-                  <div className="text-3xl">
-                    {cryptoList.find(c => c.symbol === rate.symbol)?.icon}
+                  <div className="space-y-2">
+                    <p className="text-2xl font-bold">${rate.price.toLocaleString()}</p>
+                    <p className={`text-sm flex items-center gap-1 ${rate.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <Icon name={rate.change24h >= 0 ? 'TrendingUp' : 'TrendingDown'} size={16} />
+                      {rate.change24h >= 0 ? '+' : ''}{rate.change24h.toFixed(2)}%
+                    </p>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-2xl font-bold">${rate.price.toLocaleString()}</p>
-                  <p className={`text-sm flex items-center gap-1 ${rate.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    <Icon name={rate.change24h >= 0 ? 'TrendingUp' : 'TrendingDown'} size={16} />
-                    {rate.change24h >= 0 ? '+' : ''}{rate.change24h.toFixed(2)}%
-                  </p>
-                </div>
-              </Card>
-            ))
+                </Card>
+              );
+            })
           )}
         </div>
       </section>

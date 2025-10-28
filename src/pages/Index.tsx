@@ -20,28 +20,16 @@ const Index = () => {
     toAmount,
     rates,
     loading,
+    exchangeRate,
     setFromAmount,
     setFromCrypto,
     setToCrypto,
     handleSwap,
   } = useExchangeCalculator();
 
-  const { handleExchange: submitExchange } = useExchangeSubmit();
-
   const displayCryptos = getCurrenciesByType('crypto').filter(c => 
     ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI'].includes(c.symbol)
   );
-
-  const handleExchange = () => {
-    submitExchange({
-      fromCrypto,
-      toCrypto,
-      fromAmount,
-      toAmount,
-      rates,
-      isAuthenticated,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -57,11 +45,11 @@ const Index = () => {
         fromCrypto={fromCrypto}
         toCrypto={toCrypto}
         toAmount={toAmount}
+        exchangeRate={exchangeRate}
         onFromAmountChange={setFromAmount}
         onFromCryptoChange={setFromCrypto}
         onToCryptoChange={setToCrypto}
         onSwap={handleSwap}
-        onExchange={handleExchange}
       />
 
       <CryptoRatesSection

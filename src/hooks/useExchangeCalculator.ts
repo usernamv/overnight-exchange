@@ -15,6 +15,7 @@ export const useExchangeCalculator = () => {
   const [toAmount, setToAmount] = useState('0');
   const [rates, setRates] = useState<CryptoRate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exchangeRate, setExchangeRate] = useState(0);
 
   useEffect(() => {
     fetchRates();
@@ -58,6 +59,7 @@ export const useExchangeCalculator = () => {
   const calculateExchange = () => {
     if (!fromAmount || isNaN(Number(fromAmount)) || rates.length === 0) {
       setToAmount('0');
+      setExchangeRate(0);
       return;
     }
 
@@ -67,7 +69,9 @@ export const useExchangeCalculator = () => {
     if (fromRate && toRate) {
       const fromValueUSD = Number(fromAmount) * fromRate.price;
       const toValue = fromValueUSD / toRate.price;
+      const rate = fromRate.price / toRate.price;
       setToAmount(toValue.toFixed(6));
+      setExchangeRate(rate);
     }
   };
 
@@ -84,6 +88,7 @@ export const useExchangeCalculator = () => {
     toAmount,
     rates,
     loading,
+    exchangeRate,
     setFromAmount,
     setFromCrypto,
     setToCrypto,

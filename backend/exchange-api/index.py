@@ -83,7 +83,7 @@ def list_exchanges(conn, params: Dict) -> Dict:
     status = params.get('status')
     
     query = """
-        SELECT e.*, c.email, c.full_name 
+        SELECT e.*, c.email, c.full_name, c.telegram_username
         FROM exchanges e
         LEFT JOIN clients c ON e.client_id = c.id
         WHERE 1=1
@@ -153,13 +153,15 @@ def create_exchange(conn, data: Dict) -> Dict:
     from_amount = float(data['from_amount'])
     from_currency = data['from_currency']
     to_currency = data['to_currency']
+    email = data.get('email', 'anonymous@exchange.com')
+    telegram = data.get('telegram', '')
     
     if not client_id:
         cursor.execute("""
-            INSERT INTO clients (email, full_name) 
-            VALUES (%s, %s) 
+            INSERT INTO clients (email, full_name, telegram_username) 
+            VALUES (%s, %s, %s) 
             RETURNING id
-        """, (data.get('email', 'anonymous@exchange.com'), data.get('name', 'Anonymous')))
+        """, (email, data.get('name', 'Anonymous'), telegram))
         result = cursor.fetchone()
         client_id = result['id']
     
@@ -190,8 +192,8 @@ def create_exchange(conn, data: Dict) -> Dict:
     
     cursor.execute("""
         INSERT INTO exchanges 
-        (client_id, from_currency, to_currency, from_amount, to_amount, exchange_rate, from_wallet, to_wallet, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+        (client_id, from_currency, to_currency, from_amount, to_amount, exchange_rate, from_wallet, to_wallet, status, notes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s)
         RETURNING id, created_at
     """, (
         client_id,
@@ -200,8 +202,9 @@ def create_exchange(conn, data: Dict) -> Dict:
         data['from_amount'],
         data['to_amount'],
         data['exchange_rate'],
-        data.get('from_wallet'),
-        data.get('to_wallet')
+        data.get('from_address', ''),
+        data.get('to_address', ''),
+        data.get('comment', '')
     ))
     
     result = cursor.fetchone()

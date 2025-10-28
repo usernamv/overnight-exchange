@@ -52,6 +52,23 @@ const AdminTransactions = ({ transactions, onCancelTransaction }: AdminTransacti
     }
   };
 
+  const updateStatus = async (id: number, newStatus: string) => {
+    try {
+      const res = await fetch(EXCHANGE_API_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      
+      if (res.ok) {
+        toast({ title: 'Успешно', description: `Статус обновлён на "${newStatus}"` });
+        loadTransactions();
+      }
+    } catch (error) {
+      toast({ title: 'Ошибка', description: 'Не удалось обновить статус', variant: 'destructive' });
+    }
+  };
+
   const displayTransactions = apiTransactions.length > 0 ? apiTransactions : transactions;
 
   if (loading) {
@@ -108,14 +125,47 @@ const AdminTransactions = ({ transactions, onCancelTransaction }: AdminTransacti
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  {tx.status === 'pending' && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="default" 
+                        onClick={() => updateStatus(tx.id, 'completed')}
+                        title="Завершить"
+                      >
+                        <Icon name="Check" size={16} />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => updateStatus(tx.id, 'failed')}
+                        title="Отменить"
+                      >
+                        <Icon name="X" size={16} />
+                      </Button>
+                    </>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      toast({
+                        title: `Заявка #${tx.id}`,
+                        description: (
+                          <div className="space-y-2 mt-2">
+                            <p><strong>Email:</strong> {tx.email}</p>
+                            <p><strong>Telegram:</strong> {tx.telegram_username || 'не указан'}</p>
+                            <p><strong>Адрес отправки:</strong> {tx.from_wallet || 'не указан'}</p>
+                            <p><strong>Адрес получения:</strong> {tx.to_wallet || 'не указан'}</p>
+                            {tx.notes && <p><strong>Комментарий:</strong> {tx.notes}</p>}
+                          </div>
+                        ),
+                      });
+                    }}
+                    title="Детали"
+                  >
                     <Icon name="Eye" size={16} />
                   </Button>
-                  {tx.status === 'pending' && (
-                    <Button size="sm" variant="destructive" onClick={() => onCancelTransaction(tx.id)}>
-                      <Icon name="X" size={16} />
-                    </Button>
-                  )}
                 </div>
               </TableCell>
             </TableRow>

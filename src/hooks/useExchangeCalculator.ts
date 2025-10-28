@@ -18,6 +18,10 @@ export const useExchangeCalculator = () => {
 
   useEffect(() => {
     fetchRates();
+    const interval = setInterval(() => {
+      fetchRates();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

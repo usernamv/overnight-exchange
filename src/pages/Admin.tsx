@@ -54,27 +54,15 @@ const Admin = () => {
   };
 
   const stats = [
-    { label: 'Всего транзакций', value: '12,458', change: '+12.5%', icon: 'Repeat', positive: true },
-    { label: 'Объём за 24ч', value: '$2.4M', change: '+8.3%', icon: 'TrendingUp', positive: true },
-    { label: 'Активных пользователей', value: '3,247', change: '+5.1%', icon: 'Users', positive: true },
-    { label: 'Доход', value: '$12,450', change: '-2.4%', icon: 'DollarSign', positive: false },
+    { label: 'Всего транзакций', value: '0', change: '+0%', icon: 'Repeat', positive: true },
+    { label: 'Объём за 24ч', value: '$0', change: '+0%', icon: 'TrendingUp', positive: true },
+    { label: 'Активных пользователей', value: '0', change: '+0%', icon: 'Users', positive: true },
+    { label: 'Доход', value: '$0', change: '+0%', icon: 'DollarSign', positive: true },
   ];
 
-  const transactions: Transaction[] = [
-    { id: 'TX001', date: '2024-10-27 14:32', from: 'BTC', to: 'USDT', fromAmount: 0.5, toAmount: 32500, status: 'completed', user: 'user@example.com' },
-    { id: 'TX002', date: '2024-10-27 14:28', from: 'ETH', to: 'BTC', fromAmount: 10, toAmount: 0.15, status: 'completed', user: 'trader@mail.com' },
-    { id: 'TX003', date: '2024-10-27 14:15', from: 'USDT', to: 'SOL', fromAmount: 5000, toAmount: 120.5, status: 'pending', user: 'crypto@test.com' },
-    { id: 'TX004', date: '2024-10-27 13:45', from: 'BNB', to: 'ETH', fromAmount: 50, toAmount: 3.2, status: 'failed', user: 'user123@mail.ru' },
-    { id: 'TX005', date: '2024-10-27 13:30', from: 'SOL', to: 'USDT', fromAmount: 100, toAmount: 4150, status: 'completed', user: 'sol_trader@gmail.com' },
-  ];
+  const transactions: Transaction[] = [];
 
-  const users: User[] = [
-    { id: 'U001', email: 'user@example.com', name: 'Иван Петров', status: 'active', kycStatus: 'verified', totalTrades: 45, totalVolume: 125000 },
-    { id: 'U002', email: 'trader@mail.com', name: 'Алексей Смирнов', status: 'active', kycStatus: 'verified', totalTrades: 128, totalVolume: 580000 },
-    { id: 'U003', email: 'crypto@test.com', name: 'Мария Козлова', status: 'active', kycStatus: 'pending', totalTrades: 12, totalVolume: 45000 },
-    { id: 'U004', email: 'user123@mail.ru', name: 'Дмитрий Волков', status: 'blocked', kycStatus: 'none', totalTrades: 3, totalVolume: 8500 },
-    { id: 'U005', email: 'sol_trader@gmail.com', name: 'Елена Новикова', status: 'active', kycStatus: 'verified', totalTrades: 67, totalVolume: 320000 },
-  ];
+  const users: User[] = [];
 
   const handleBlockUser = (userId: string) => {
     toast({

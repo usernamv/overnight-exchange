@@ -60,7 +60,6 @@ const CryptoRatesSection = ({ displayCryptos }: CryptoRatesSectionProps) => {
 
   useEffect(() => {
     fetchRates();
-    return () => clearInterval(interval);
   }, []);
   if (loading) {
     return (

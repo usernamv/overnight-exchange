@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import Icon from '@/components/ui/icon';
-import { currencies } from '@/data/currencies';
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import Icon from "@/components/ui/icon";
+import { currencies } from "@/data/currencies";
 
 interface CryptoRate {
   symbol: string;
@@ -27,36 +27,39 @@ const CryptoRatesSection = ({ displayCryptos }: CryptoRatesSectionProps) => {
 
   const fetchRates = async () => {
     try {
-      const cryptoSymbols = currencies.filter(c => c.type === 'crypto').map(c => c.symbol).join(',');
-      const fiatSymbols = currencies.filter(c => c.type === 'fiat').map(c => c.symbol).join(',');
-      
+      const cryptoSymbols = currencies
+        .filter((c) => c.type === "crypto")
+        .map((c) => c.symbol)
+        .join(",");
+      const fiatSymbols = currencies
+        .filter((c) => c.type === "fiat")
+        .map((c) => c.symbol)
+        .join(",");
+
       const response = await fetch(
-        `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${cryptoSymbols}&tsyms=${fiatSymbols}`
+        `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${cryptoSymbols}&tsyms=${fiatSymbols}`,
       );
       const data = await response.json();
-      
+
       const ratesData: CryptoRate[] = currencies
-        .filter(c => c.type === 'crypto')
-        .map(crypto => ({
+        .filter((c) => c.type === "crypto")
+        .map((crypto) => ({
           symbol: crypto.symbol,
           name: crypto.name,
           price: data.RAW?.[crypto.symbol]?.USD?.PRICE || 0,
           change24h: data.RAW?.[crypto.symbol]?.USD?.CHANGEPCT24HOUR || 0,
         }));
-      
+
       setRates(ratesData);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch rates:', error);
+      console.error("Failed to fetch rates:", error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchRates();
-    const interval = setInterval(() => {
-      fetchRates();
-    }, 30000);
     return () => clearInterval(interval);
   }, []);
   if (loading) {
@@ -79,12 +82,12 @@ const CryptoRatesSection = ({ displayCryptos }: CryptoRatesSectionProps) => {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl mx-auto">
         {displayCryptos.map((crypto) => {
-          const rate = rates.find(r => r.symbol === crypto.symbol);
+          const rate = rates.find((r) => r.symbol === crypto.symbol);
           if (!rate) return null;
 
           return (
-            <Card 
-              key={crypto.symbol} 
+            <Card
+              key={crypto.symbol}
               className="p-6 bg-card/50 backdrop-blur-sm border-border/40 hover:border-primary/50 transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between mb-4">
@@ -94,21 +97,34 @@ const CryptoRatesSection = ({ displayCryptos }: CryptoRatesSectionProps) => {
                   </div>
                   <div>
                     <p className="font-bold">{crypto.symbol}</p>
-                    <p className="text-xs text-muted-foreground">{crypto.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {crypto.name}
+                    </p>
                   </div>
                 </div>
-                <Badge 
-                  variant={rate.change24h >= 0 ? 'default' : 'destructive'}
-                  className={rate.change24h >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}
+                <Badge
+                  variant={rate.change24h >= 0 ? "default" : "destructive"}
+                  className={
+                    rate.change24h >= 0
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }
                 >
-                  {rate.change24h >= 0 ? '+' : ''}{rate.change24h.toFixed(2)}%
+                  {rate.change24h >= 0 ? "+" : ""}
+                  {rate.change24h.toFixed(2)}%
                 </Badge>
               </div>
               <div className="space-y-1">
                 <p className="text-2xl font-bold">
-                  ${rate.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  $
+                  {rate.price.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
-                <p className="text-xs text-muted-foreground">за 1 {crypto.symbol}</p>
+                <p className="text-xs text-muted-foreground">
+                  за 1 {crypto.symbol}
+                </p>
               </div>
             </Card>
           );

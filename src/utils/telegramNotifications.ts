@@ -16,7 +16,7 @@ export const sendTelegramNotification = async (data: NotificationData): Promise<
   try {
     const formattedMessage = formatNotification(data.notification_type, data.message, data.extra_data || {});
     
-    const response = await fetch(`https://api.telegram.org/bot${8381003513:AAEO2qt3xEpcHu0le3kYStL6eE22NePMK3U}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

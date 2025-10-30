@@ -54,8 +54,6 @@ const Index = () => {
 
       <CryptoRatesSection
         displayCryptos={displayCryptos}
-        rates={rates}
-        loading={loading}
       />
 
       <FeaturesSection />

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import KYCVerification from '@/components/dashboard/KYCVerification';
 
 const EXCHANGE_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
 const KYC_AML_API_URL = 'https://functions.poehali.dev/4f24f2ad-e009-45ce-9f47-ee953647179a';
@@ -292,54 +293,10 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="verification">
-            <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/40">
-              <h3 className="text-xl font-bold mb-6">KYC Верификация</h3>
-              
-              <div className="space-y-6">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="font-semibold mb-1">Статус верификации</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {kycStatus ? kycStatus.status : 'Не пройдена'}
-                      </p>
-                    </div>
-                    <Badge className={kycStatus?.status === 'approved' ? 'bg-green-400/10 text-green-400' : 'bg-yellow-400/10 text-yellow-400'}>
-                      {kycStatus?.verification_level || 'none'}
-                    </Badge>
-                  </div>
-                  
-                  {!kycStatus && (
-                    <Button className="w-full">
-                      <Icon name="FileText" size={16} className="mr-2" />
-                      Пройти верификацию
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="border border-border/40 rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Базовая верификация</h4>
-                    <p className="text-sm text-muted-foreground mb-3">Лимит: $5,000/день</p>
-                    <ul className="text-sm space-y-1 mb-4">
-                      <li>✓ Email подтверждение</li>
-                      <li>✓ Фото документа</li>
-                      <li>✓ Селфи</li>
-                    </ul>
-                  </div>
-
-                  <div className="border border-border/40 rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Продвинутая верификация</h4>
-                    <p className="text-sm text-muted-foreground mb-3">Лимит: $50,000/день</p>
-                    <ul className="text-sm space-y-1 mb-4">
-                      <li>✓ Все из базовой</li>
-                      <li>✓ Подтверждение адреса</li>
-                      <li>✓ AML проверка</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <KYCVerification 
+              clientId={localStorage.getItem('client_id') || '1'} 
+              onUpdate={loadDashboard}
+            />
           </TabsContent>
 
           <TabsContent value="settings">

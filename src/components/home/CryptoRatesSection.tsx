@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import { currencies } from '@/data/currencies';
 
 interface CryptoRate {
   symbol: string;
@@ -17,11 +19,46 @@ interface Currency {
 
 interface CryptoRatesSectionProps {
   displayCryptos: Currency[];
-  rates: CryptoRate[];
-  loading: boolean;
 }
 
-const CryptoRatesSection = ({ displayCryptos, rates, loading }: CryptoRatesSectionProps) => {
+const CryptoRatesSection = ({ displayCryptos }: CryptoRatesSectionProps) => {
+  const [rates, setRates] = useState<CryptoRate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRates = async () => {
+    try {
+      const cryptoSymbols = currencies.filter(c => c.type === 'crypto').map(c => c.symbol).join(',');
+      const fiatSymbols = currencies.filter(c => c.type === 'fiat').map(c => c.symbol).join(',');
+      
+      const response = await fetch(
+        `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${cryptoSymbols}&tsyms=${fiatSymbols}`
+      );
+      const data = await response.json();
+      
+      const ratesData: CryptoRate[] = currencies
+        .filter(c => c.type === 'crypto')
+        .map(crypto => ({
+          symbol: crypto.symbol,
+          name: crypto.name,
+          price: data.RAW?.[crypto.symbol]?.USD?.PRICE || 0,
+          change24h: data.RAW?.[crypto.symbol]?.USD?.CHANGEPCT24HOUR || 0,
+        }));
+      
+      setRates(ratesData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch rates:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRates();
+    const interval = setInterval(() => {
+      fetchRates();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
   if (loading) {
     return (
       <section id="rates" className="container mx-auto px-4 py-16">

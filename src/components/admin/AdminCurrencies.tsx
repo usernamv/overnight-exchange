@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
-const CURRENCIES_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
+const ADMIN_API_URL = 'https://functions.poehali.dev/d081ce90-f0f7-4af5-b43e-73f17edf6d7c';
 
 interface Currency {
   id: number;
@@ -41,7 +41,7 @@ export default function AdminCurrencies() {
 
   const loadCurrencies = async () => {
     try {
-      const response = await fetch(`${CURRENCIES_API_URL}?action=list_currencies`);
+      const response = await fetch(`${ADMIN_API_URL}?resource=currencies`);
       const data = await response.json();
       setCurrencies(data.currencies || []);
     } catch (error) {
@@ -57,11 +57,11 @@ export default function AdminCurrencies() {
 
   const handleAddCurrency = async () => {
     try {
-      const response = await fetch(CURRENCIES_API_URL, {
+      const response = await fetch(ADMIN_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'add_currency',
+          resource: 'currency',
           ...newCurrency,
         }),
       });
@@ -86,12 +86,12 @@ export default function AdminCurrencies() {
 
   const toggleCurrency = async (id: number, isActive: boolean) => {
     try {
-      const response = await fetch(CURRENCIES_API_URL, {
-        method: 'POST',
+      const response = await fetch(ADMIN_API_URL, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'toggle_currency',
-          currency_id: id,
+          resource: 'currency',
+          id,
           is_active: !isActive,
         }),
       });

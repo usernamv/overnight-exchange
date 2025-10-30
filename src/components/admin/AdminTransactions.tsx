@@ -21,12 +21,7 @@ interface Transaction {
   user: string;
 }
 
-interface AdminTransactionsProps {
-  transactions: Transaction[];
-  onCancelTransaction: (txId: string) => void;
-}
-
-const AdminTransactions = ({ transactions, onCancelTransaction }: AdminTransactionsProps) => {
+const AdminTransactions = () => {
   const { toast } = useToast();
   const [apiTransactions, setApiTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +64,7 @@ const AdminTransactions = ({ transactions, onCancelTransaction }: AdminTransacti
     }
   };
 
-  const displayTransactions = apiTransactions.length > 0 ? apiTransactions : transactions;
+  const displayTransactions = apiTransactions;
 
   if (loading) {
     return (

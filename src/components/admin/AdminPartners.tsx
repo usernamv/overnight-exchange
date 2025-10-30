@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
-const PARTNERS_API_URL = 'https://functions.poehali.dev/cb22a964-580b-490f-a97e-6a94308c6580';
+const ADMIN_API_URL = 'https://functions.poehali.dev/d081ce90-f0f7-4af5-b43e-73f17edf6d7c';
 
 interface Partner {
   id: number;
@@ -42,9 +42,9 @@ export default function AdminPartners() {
 
   const loadPartners = async () => {
     try {
-      const response = await fetch(`${PARTNERS_API_URL}?action=list_partners`);
+      const response = await fetch(`${ADMIN_API_URL}?resource=sponsors`);
       const data = await response.json();
-      setPartners(data.partners || []);
+      setPartners(data.sponsors || []);
     } catch (error) {
       toast({
         title: 'Ошибка',
@@ -58,11 +58,11 @@ export default function AdminPartners() {
 
   const handleAddPartner = async () => {
     try {
-      const response = await fetch(PARTNERS_API_URL, {
+      const response = await fetch(ADMIN_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'add_partner',
+          resource: 'sponsor',
           ...newPartner,
         }),
       });
@@ -87,12 +87,12 @@ export default function AdminPartners() {
 
   const togglePartner = async (id: number, isActive: boolean) => {
     try {
-      const response = await fetch(PARTNERS_API_URL, {
-        method: 'POST',
+      const response = await fetch(ADMIN_API_URL, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'toggle_partner',
-          partner_id: id,
+          resource: 'sponsor',
+          id,
           is_active: !isActive,
         }),
       });
@@ -117,13 +117,8 @@ export default function AdminPartners() {
     if (!confirm('Удалить партнёра?')) return;
 
     try {
-      const response = await fetch(PARTNERS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'delete_partner',
-          partner_id: id,
-        }),
+      const response = await fetch(`${ADMIN_API_URL}?resource=sponsor&id=${id}`, {
+        method: 'DELETE',
       });
 
       if (response.ok) {

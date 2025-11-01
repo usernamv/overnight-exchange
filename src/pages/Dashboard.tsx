@@ -49,13 +49,13 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      const clientId = localStorage.getItem('client_id') || '1';
+      const userEmail = user?.email || '';
       
-      const exchangesResponse = await fetch(`${EXCHANGE_API_URL}?action=list_exchanges&client_id=${clientId}`);
+      const exchangesResponse = await fetch(`${EXCHANGE_API_URL}?action=list_exchanges&client_email=${encodeURIComponent(userEmail)}`);
       const exchangesData = await exchangesResponse.json();
       setExchanges(exchangesData.exchanges || []);
       
-      const kycResponse = await fetch(`${KYC_AML_API_URL}?action=get_kyc_status&client_id=${clientId}`);
+      const kycResponse = await fetch(`${KYC_AML_API_URL}?action=get_kyc_status&email=${encodeURIComponent(userEmail)}`);
       const kycData = await kycResponse.json();
       setKycStatus(kycData.kyc);
       
@@ -294,7 +294,7 @@ export default function Dashboard() {
 
           <TabsContent value="verification">
             <KYCVerification 
-              clientId={localStorage.getItem('client_id') || '1'} 
+              clientId={user?.email || ''} 
               onUpdate={loadDashboard}
             />
           </TabsContent>

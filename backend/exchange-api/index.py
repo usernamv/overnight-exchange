@@ -82,6 +82,7 @@ def list_exchanges(conn, params: Dict) -> Dict:
     offset = int(params.get('offset', 0))
     status = params.get('status')
     client_id = params.get('client_id')
+    client_email = params.get('client_email')
     
     query = """
         SELECT e.*, c.email, c.full_name, c.telegram_username
@@ -90,8 +91,10 @@ def list_exchanges(conn, params: Dict) -> Dict:
         WHERE 1=1
     """
     
-    if client_id:
+    if client_id and client_id.isdigit():
         query += f" AND e.client_id = {client_id}"
+    elif client_email:
+        query += f" AND c.email = '{client_email}'"
     
     if status:
         query += f" AND e.status = '{status}'"
@@ -101,9 +104,11 @@ def list_exchanges(conn, params: Dict) -> Dict:
     cursor.execute(query)
     exchanges = cursor.fetchall()
     
-    count_query = "SELECT COUNT(*) as total FROM exchanges e WHERE 1=1"
-    if client_id:
+    count_query = "SELECT COUNT(*) as total FROM exchanges e LEFT JOIN clients c ON e.client_id = c.id WHERE 1=1"
+    if client_id and client_id.isdigit():
         count_query += f" AND e.client_id = {client_id}"
+    elif client_email:
+        count_query += f" AND c.email = '{client_email}'"
     if status:
         count_query += f" AND e.status = '{status}'"
     
@@ -172,6 +177,11 @@ def create_exchange(conn, data: Dict) -> Dict:
         
         if existing_client:
             client_id = existing_client['id']
+            cursor.execute("""
+                UPDATE clients 
+                SET telegram_username = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (telegram, client_id))
         else:
             cursor.execute("""
                 INSERT INTO clients (email, full_name, telegram_username) 

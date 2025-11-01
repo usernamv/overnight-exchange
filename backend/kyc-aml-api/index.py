@@ -40,7 +40,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if action == 'check_limits':
                 return check_exchange_limits(conn, params)
             elif action == 'get_kyc_status':
-                return get_kyc_status(conn, params.get('client_id'))
+                return get_kyc_status(conn, params.get('client_id'), params.get('email'))
             elif action == 'get_aml_status':
                 return get_aml_status(conn, params.get('client_id'))
             elif action == 'verify_wallet':
@@ -130,8 +130,22 @@ def check_exchange_limits(conn, params: Dict) -> Dict:
         'isBase64Encoded': False
     }
 
-def get_kyc_status(conn, client_id: str) -> Dict:
+def get_kyc_status(conn, client_id: str = None, email: str = None) -> Dict:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if email:
+        cursor.execute("SELECT id FROM clients WHERE email = %s", (email,))
+        client = cursor.fetchone()
+        if client:
+            client_id = client['id']
+    
+    if not client_id:
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'kyc': None}, default=str),
+            'isBase64Encoded': False
+        }
     
     cursor.execute("""
         SELECT * FROM kyc_verifications 
@@ -169,6 +183,20 @@ def get_aml_status(conn, client_id: str) -> Dict:
 def submit_kyc_documents(conn, data: Dict) -> Dict:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
+    client_id = data.get('client_id')
+    
+    if not client_id or not str(client_id).isdigit():
+        cursor.execute("SELECT id FROM clients WHERE email = %s", (client_id,))
+        client = cursor.fetchone()
+        if not client:
+            return {
+                'statusCode': 404,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Client not found'}),
+                'isBase64Encoded': False
+            }
+        client_id = client['id']
+    
     cursor.execute("""
         INSERT INTO kyc_verifications 
         (client_id, verification_level, status, document_type, document_number, 
@@ -176,7 +204,7 @@ def submit_kyc_documents(conn, data: Dict) -> Dict:
         VALUES (%s, %s, 'reviewing', %s, %s, %s, %s, %s, %s)
         RETURNING id
     """, (
-        data['client_id'],
+        client_id,
         data.get('verification_level', 'basic'),
         data.get('document_type'),
         data.get('document_number'),
@@ -190,7 +218,7 @@ def submit_kyc_documents(conn, data: Dict) -> Dict:
     
     cursor.execute("""
         UPDATE clients SET kyc_status = 'reviewing' WHERE id = %s
-    """, (data['client_id'],))
+    """, (client_id,))
     
     conn.commit()
     

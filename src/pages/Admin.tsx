@@ -187,7 +187,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="users">
-            <AdminUsers users={users} onBlockUser={handleBlockUser} onApproveKYC={handleApproveKYC} />
+            <AdminUsers />
           </TabsContent>
 
           <TabsContent value="currencies">

@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import CurrencySelector from '@/components/CurrencySelector';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import ExchangeRequestModal from './ExchangeRequestModal';
 
 interface ExchangeCalculatorProps {
@@ -31,12 +34,26 @@ const ExchangeCalculator = ({
   onSwap,
 }: ExchangeCalculatorProps) => {
   const { t } = useLanguage();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
     if (!fromAmount || parseFloat(fromAmount) <= 0) {
       return;
     }
+    
+    if (!isAuthenticated) {
+      toast({
+        title: 'Требуется вход',
+        description: 'Для создания заявки необходимо войти в личный кабинет',
+        variant: 'destructive',
+      });
+      navigate('/login');
+      return;
+    }
+    
     setIsModalOpen(true);
   };
 

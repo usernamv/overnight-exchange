@@ -29,19 +29,28 @@ export default function AdminAnalytics() {
       const response = await fetch(`${ANALYTICS_API_URL}?action=get_analytics`);
       const data = await response.json();
       setAnalytics(data.analytics || {
-        total_revenue: 125430.50,
-        total_exchanges: 1247,
-        total_volume: 2547890.25,
-        avg_exchange_rate: 1.02,
-        today_revenue: 5420.30,
-        today_exchanges: 47,
-        commission_earned: 12543.05,
+        total_revenue: 0,
+        total_exchanges: 0,
+        total_volume: 0,
+        avg_exchange_rate: 0,
+        today_revenue: 0,
+        today_exchanges: 0,
+        commission_earned: 0,
       });
     } catch (error) {
       toast({
         title: 'Ошибка',
         description: 'Не удалось загрузить аналитику',
         variant: 'destructive',
+      });
+      setAnalytics({
+        total_revenue: 0,
+        total_exchanges: 0,
+        total_volume: 0,
+        avg_exchange_rate: 0,
+        today_revenue: 0,
+        today_exchanges: 0,
+        commission_earned: 0,
       });
     } finally {
       setLoading(false);

@@ -169,7 +169,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Объем</p>
-                <p className="text-2xl font-bold">{stats?.total_volume?.toFixed(4) || '0'}</p>
+                <p className="text-2xl font-bold">{typeof stats?.total_volume === 'number' ? stats.total_volume.toFixed(4) : '0.0000'}</p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center">
                 <Icon name="TrendingUp" size={24} className="text-secondary" />

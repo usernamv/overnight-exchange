@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (email === 'admin@overnight.exchange' && password === 'admin123') {
+    if (email === 'admin@overnight.exchange' && password === 'Admin2025!Secure') {
       const adminUser: User = {
-        id: '1',
+        id: 'admin',
         email: email,
         role: 'admin',
       };
@@ -38,14 +38,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     }
     
-    if (email && password) {
+    if (email && password && password.length >= 6) {
       const regularUser: User = {
-        id: '2',
+        id: email,
         email: email,
         role: 'user',
       };
       setUser(regularUser);
       localStorage.setItem('auth_user', JSON.stringify(regularUser));
+      localStorage.setItem('client_id', email);
       return true;
     }
     

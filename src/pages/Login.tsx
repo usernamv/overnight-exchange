@@ -125,13 +125,7 @@ const Login = () => {
         <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
           <p className="text-sm text-muted-foreground mb-2">
             <Icon name="Info" size={16} className="inline mr-1" />
-            Тестовые данные:
-          </p>
-          <p className="text-sm font-mono">
-            Admin: admin@overnight.exchange / admin123
-          </p>
-          <p className="text-sm font-mono mt-1">
-            User: любой email / любой пароль
+            Для входа используйте email и пароль (минимум 6 символов)
           </p>
         </div>
 

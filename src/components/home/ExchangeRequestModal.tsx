@@ -41,10 +41,10 @@ const ExchangeRequestModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.toAddress) {
+    if (!formData.email || !formData.telegram || !formData.toAddress) {
       toast({
         title: 'Ошибка',
-        description: 'Заполните обязательные поля: Email и адрес получения',
+        description: 'Заполните обязательные поля: Email, Telegram и адрес получения',
         variant: 'destructive',
       });
       return;
@@ -143,12 +143,13 @@ const ExchangeRequestModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="telegram">Telegram (необязательно)</Label>
+            <Label htmlFor="telegram">Telegram <span className="text-destructive">*</span></Label>
             <Input
               id="telegram"
               placeholder="@username"
               value={formData.telegram}
               onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
+              required
             />
           </div>
 

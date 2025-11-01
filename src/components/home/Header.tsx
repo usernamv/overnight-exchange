@@ -63,25 +63,13 @@ const Header = ({ isAuthenticated, isAdmin }: HeaderProps) => {
               {t.nav.login}
             </Button>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-              >
-                <Icon name="User" size={18} className="mr-2" />
-                {t.nav.dashboard}
-              </Button>
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
-                  onClick={() => navigate('/admin')}
-                >
-                  <Icon name="Shield" size={18} className="mr-2" />
-                  {t.nav.admin}
-                </Button>
-              )}
-            </>
+            <Button
+              variant="outline"
+              onClick={() => navigate(isAdmin ? '/admin' : '/dashboard')}
+            >
+              <Icon name={isAdmin ? "Shield" : "User"} size={18} className="mr-2" />
+              {isAdmin ? t.nav.admin : t.nav.dashboard}
+            </Button>
           )}
         </div>
       </nav>

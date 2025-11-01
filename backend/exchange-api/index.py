@@ -81,6 +81,7 @@ def list_exchanges(conn, params: Dict) -> Dict:
     limit = int(params.get('limit', 50))
     offset = int(params.get('offset', 0))
     status = params.get('status')
+    client_id = params.get('client_id')
     
     query = """
         SELECT e.*, c.email, c.full_name, c.telegram_username
@@ -88,6 +89,9 @@ def list_exchanges(conn, params: Dict) -> Dict:
         LEFT JOIN clients c ON e.client_id = c.id
         WHERE 1=1
     """
+    
+    if client_id:
+        query += f" AND e.client_id = {client_id}"
     
     if status:
         query += f" AND e.status = '{status}'"
@@ -97,7 +101,13 @@ def list_exchanges(conn, params: Dict) -> Dict:
     cursor.execute(query)
     exchanges = cursor.fetchall()
     
-    cursor.execute("SELECT COUNT(*) as total FROM exchanges")
+    count_query = "SELECT COUNT(*) as total FROM exchanges e WHERE 1=1"
+    if client_id:
+        count_query += f" AND e.client_id = {client_id}"
+    if status:
+        count_query += f" AND e.status = '{status}'"
+    
+    cursor.execute(count_query)
     total = cursor.fetchone()['total']
     
     return {
@@ -157,13 +167,19 @@ def create_exchange(conn, data: Dict) -> Dict:
     telegram = data.get('telegram', '')
     
     if not client_id:
-        cursor.execute("""
-            INSERT INTO clients (email, full_name, telegram_username) 
-            VALUES (%s, %s, %s) 
-            RETURNING id
-        """, (email, data.get('name', 'Anonymous'), telegram))
-        result = cursor.fetchone()
-        client_id = result['id']
+        cursor.execute("SELECT id FROM clients WHERE email = %s", (email,))
+        existing_client = cursor.fetchone()
+        
+        if existing_client:
+            client_id = existing_client['id']
+        else:
+            cursor.execute("""
+                INSERT INTO clients (email, full_name, telegram_username) 
+                VALUES (%s, %s, %s) 
+                RETURNING id
+            """, (email, data.get('name', 'Anonymous'), telegram))
+            result = cursor.fetchone()
+            client_id = result['id']
     
     cursor.execute("SELECT * FROM clients WHERE id = %s", (client_id,))
     client = cursor.fetchone()
